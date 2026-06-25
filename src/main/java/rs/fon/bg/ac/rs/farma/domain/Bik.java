@@ -65,7 +65,7 @@ public class Bik {
     private String rasa;
 
     /**
-     * Osemenjavanja u kojima je bik koriscen.
+     * Osemenjavanja u kojima je bik koriscen
      * Kolekcija se inicijalizuje kao prazna lista i predstavlja inverznu stranu veze sa entitetom Osemenjavanje.
      */
     @OneToMany(mappedBy = "bik")
