@@ -14,6 +14,12 @@ import java.time.LocalDate;
 import java.util.EnumMap;
 import java.util.Map;
 
+/**
+ * Servis za izracunavanje agregirane statistike farme u izabranom periodu.
+ * Objedinjuje broj krava po statusima, aktivne steonosti, broj bikova i veterinara
+ * i ukupnu proizvodnju mleka.
+ * @author Dimitrije Ivkovic
+ */
 @Service
 public class StatistikaService {
     private final FarmaRepository farmaRepository;
@@ -23,6 +29,15 @@ public class StatistikaService {
     private final SteonostRepository steonostRepository;
     private final ProizvodnjaMlekaRepository mlekoRepository;
 
+    /**
+     * Kreira servis sa repozitorijumima potrebnim za agregiranje statistike.
+     * @param farmaRepository repozitorijum farmi
+     * @param kravaRepository repozitorijum krava
+     * @param bikRepository repozitorijum bikova
+     * @param veterinarRepository repozitorijum veterinara
+     * @param steonostRepository repozitorijum steonosti
+     * @param mlekoRepository repozitorijum proizvodnje mleka
+     */
     public StatistikaService(FarmaRepository farmaRepository, KravaRepository kravaRepository,
                              BikRepository bikRepository, VeterinarRepository veterinarRepository,
                              SteonostRepository steonostRepository,
@@ -35,6 +50,17 @@ public class StatistikaService {
         this.mlekoRepository = mlekoRepository;
     }
 
+    /**
+     * Izracunava agregiranu statistiku izabrane farme u zadatom periodu.
+     * Obuhvata ukupan broj krava, broj krava po svakom statusu, broj bikova i veterinara,
+     * broj aktivnih steonosti i ukupnu proizvodnju mleka.
+     * @param farmaId jedinstveni identifikator farme
+     * @param od pocetni datum perioda, ukljucivo
+     * @param doDatuma krajnji datum perioda, ukljucivo
+     * @return agregirana statistika farme
+     * @throws BusinessException ako je pocetni datum posle krajnjeg
+     * @throws ResourceNotFoundException ako farma ne postoji
+     */
     @Transactional(readOnly = true)
     public StatistikaFarmeResponse prikazi(Long farmaId, LocalDate od, LocalDate doDatuma) {
         if (od.isAfter(doDatuma)) {

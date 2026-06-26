@@ -12,6 +12,12 @@ import rs.fon.bg.ac.rs.farma.repository.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
+/**
+ * Servis za izvoz i uvoz kompletnog skupa podataka aplikacije u JSON formatu.
+ * Prilikom uvoza ponovo uspostavlja veze izmedju entiteta, podrzava samo verziju
+ * formata 1 i dozvoljava uvoz iskljucivo u praznu bazu.
+ * @author Dimitrije Ivkovic
+ */
 @Service
 public class JsonService {
     private final ObjectMapper objectMapper;
@@ -24,6 +30,18 @@ public class JsonService {
     private final TeljenjeRepository teljenjeRepository;
     private final ProizvodnjaMlekaRepository mlekoRepository;
 
+    /**
+     * Kreira servis sa objektom za JSON obradu i svim potrebnim repozitorijumima.
+     * @param objectMapper komponenta za serijalizaciju i deserijalizaciju JSON-a
+     * @param farmaRepository repozitorijum farmi
+     * @param kravaRepository repozitorijum krava
+     * @param bikRepository repozitorijum bikova
+     * @param veterinarRepository repozitorijum veterinara
+     * @param osemenjavanjeRepository repozitorijum osemenjavanja
+     * @param steonostRepository repozitorijum steonosti
+     * @param teljenjeRepository repozitorijum teljenja
+     * @param mlekoRepository repozitorijum proizvodnje mleka
+     */
     public JsonService(ObjectMapper objectMapper, FarmaRepository farmaRepository,
                        KravaRepository kravaRepository, BikRepository bikRepository,
                        VeterinarRepository veterinarRepository,
@@ -41,6 +59,11 @@ public class JsonService {
         this.mlekoRepository = mlekoRepository;
     }
 
+    /**
+     * Serijalizuje kompletne podatke aplikacije u JSON dokument verzije 1.
+     * @return formatiran JSON sadrzaj kao niz bajtova
+     * @throws BusinessException ako serijalizacija podataka ne uspe
+     */
     @Transactional(readOnly = true)
     public byte[] izvezi() {
         IzvozPodatakaDto dto = new IzvozPodatakaDto(1, LocalDateTime.now(),
@@ -72,6 +95,13 @@ public class JsonService {
         }
     }
 
+    /**
+     * Uvozi podatke iz JSON dokumenta verzije 1 u praznu bazu i ponovo uspostavlja veze entiteta.
+     * @param json JSON sadrzaj kao niz bajtova; ne sme predstavljati neispravan ili nepodrzan format
+     * @return broj uvezenih objekata po tipu
+     * @throws BusinessException ako baza nije prazna, JSON nije ispravan, verzija nije podrzana
+     * ili dokument referencira objekat koji ne postoji
+     */
     @Transactional
     public UvozRezultatResponse uvezi(byte[] json) {
         proveriPraznuBazu();
@@ -153,6 +183,10 @@ public class JsonService {
                 safe(dto.teljenja()).size(), safe(dto.proizvodnjaMleka()).size());
     }
 
+    /**
+     * Proverava da li su sve tabele koje ucestvuju u uvozu prazne.
+     * @throws BusinessException ako u bilo kom repozitorijumu vec postoje podaci
+     */
     private void proveriPraznuBazu() {
         long ukupno = farmaRepository.count() + kravaRepository.count() + bikRepository.count()
                 + veterinarRepository.count() + osemenjavanjeRepository.count()
@@ -162,12 +196,27 @@ public class JsonService {
         }
     }
 
+    /**
+     * Pronalazi obavezni objekat u mapi prema identifikatoru iz uvoznog dokumenta.
+     * @param map mapa originalnih identifikatora na sacuvane objekte
+     * @param id originalni identifikator trazenog objekta
+     * @param naziv naziv tipa objekta koji se koristi u poruci greske
+     * @param <T> tip trazenog objekta
+     * @return objekat povezan sa prosledjenim identifikatorom
+     * @throws BusinessException ako mapa ne sadrzi trazeni identifikator
+     */
     private <T> T required(Map<Long, T> map, Long id, String naziv) {
         T value = map.get(id);
         if (value == null) throw new BusinessException("JSON referencira nepostojeci objekat: " + naziv + " " + id);
         return value;
     }
 
+    /**
+     * Vraca prosledjenu listu ili praznu nepromenljivu listu kada je vrednost null.
+     * @param list lista koja moze biti null
+     * @param <T> tip elemenata liste
+     * @return originalna lista ili prazna lista
+     */
     private <T> List<T> safe(List<T> list) {
         return list == null ? List.of() : list;
     }
